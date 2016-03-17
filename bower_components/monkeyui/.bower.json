@@ -24,14 +24,14 @@
   "devDependencies": {
     "jquery-knob": "~1.2.13"
   },
-  "version": "0.1.3",
-  "_release": "0.1.3",
+  "version": "0.1.4",
+  "_release": "0.1.4",
   "_resolution": {
     "type": "version",
-    "tag": "0.1.3",
-    "commit": "5a7943ed914c65f17c85996d5a06ee3be3eeb635"
+    "tag": "0.1.4",
+    "commit": "22bbbfabd4ffa812b2aa795956d5f9183dc5e457"
   },
   "_source": "git://github.com/Criptext/MonkeyUI-Web.git",
-  "_target": "^0.1.3",
+  "_target": "^0.1.4",
   "_originalSource": "monkeyui"
 }

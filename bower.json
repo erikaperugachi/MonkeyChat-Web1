@@ -20,6 +20,6 @@
     "tests"
   ],
   "dependencies": {
-    "monkeyui": "^0.1.3"
+    "monkeyui": "^0.1.4"
   }
 }
