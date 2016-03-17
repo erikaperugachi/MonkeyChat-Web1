@@ -1,0 +1,25 @@
+{
+  "name": "monkey-chat",
+  "description": "monkey chat library",
+  "main": "main.js",
+  "authors": [
+    "Criptext INC."
+  ],
+  "license": "ISC",
+  "keywords": [
+    "monkey",
+    "chat"
+  ],
+  "moduleType": [],
+  "homepage": "",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "monkeyui": "^0.1.3"
+  }
+}
