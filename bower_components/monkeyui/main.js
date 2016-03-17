@@ -142,7 +142,7 @@ var monkeyUI = new function(){
     this.drawScene = function(){
 
         var e = document.createElement("link");
-        e.href = "http://cdn.criptext.com/MonkeyUI/styles/chat1.css", e.type = "text/css", e.rel = "stylesheet", document.getElementsByTagName("head")[0].appendChild(e)
+        e.href = "http://cdn.criptext.com/MonkeyUI/styles/chat2.css", e.type = "text/css", e.rel = "stylesheet", document.getElementsByTagName("head")[0].appendChild(e)
 
         if( $('.wrapper-out').length <= 0 ){
             var _scene = '';
@@ -331,8 +331,8 @@ var monkeyUI = new function(){
                 _html += '<div class="button-input">'+
                             '<button id="button-attach" class="button-icon"></button>'+
                             '<input type="file" name="attach" id="attach-file" style="display:none" accept=".pdf,.xls,.xlsx,.doc,.docx,.ppt,.pptx, image/*">'+
-                        '</div>';//+
-                        //'<div class="' + monkeyUI.screen.data.mode + ' jFiler-input-dragDrop" style="width:'+dd_width+'; height:'+dd_height+';"><div class="jFiler-input-inner"><div class="jFiler-input-icon"><i class="icon-jfi-cloud-up-o"></i></div><div class="jFiler-input-text"><h3>Drop files here</h3></div></div></div>';
+                        '</div>'+
+                        '<div class="' + monkeyUI.screen.data.mode + ' jFiler-input-dragDrop" style="width:'+dd_width+'; height:'+dd_height+';"><div class="jFiler-input-inner"><div class="jFiler-input-icon"><i class="icon-jfi-cloud-up-o"></i></div><div class="jFiler-input-text"><h3>Drop files here</h3></div></div></div>';
             }
             
             if (input.isAudioButton) {
@@ -499,48 +499,54 @@ var monkeyUI = new function(){
             mediaRecorder = null;
         });
 
-        // $("#attach-file").filer({
-        //     limit: null,
-        //     maxSize: null,
-        //     extensions: null,
-        //     changeInput: '<div class="chat-drop-zone" ></div>',
-        //     showThumbs: true,
-        //     theme: "dragdropbox",
-        //     dragDrop: {
-        //         dragEnter: function () {
-        //             console.log('file entered');
-        //             $('.jFiler-input-dragDrop').show();
-        //         },
-        //         dragLeave: function () {
-        //             console.log('file entered');
-        //             $('.chat-drop-zone').hide();
-        //             $('.jFiler-input-dragDrop').hide();
-        //         },
-        //         drop: function () {
-        //             console.log('file entered');
-        //             $('.chat-drop-zone').hide();
-        //             $('.jFiler-input-dragDrop').hide();
-        //         },
-        //     },
-        //     files: null,
-        //     addMore: false,
-        //     clipBoardPaste: true,
-        //     excludeName: null,
-        //     beforeRender: null,
-        //     afterRender: null,
-        //     beforeShow: null,
-        //     beforeSelect: null,
-        //     onSelect: function(obj) {
-        //         // showChatInputFile();
-        //         catchUpFile(obj)
-        //     },
-        //     afterShow: null,
-        //     onEmpty: null,
-        //     options: null,
-        //     captions: {
-        //         drop: "Drop file here to Upload"
-        //     }
-        // });
+        $("#attach-file").filer({
+            limit: null,
+            maxSize: null,
+            extensions: null,
+            changeInput: '<div class="chat-drop-zone" ></div>',
+            showThumbs: true,
+            theme: "dragdropbox",
+            dragDrop: {
+                dragEnter: function () {
+                    console.log('file entered');
+                    $('.jFiler-input-dragDrop').show();
+                },
+                dragLeave: function () {
+                    console.log('file entered');
+                    $('.chat-drop-zone').hide();
+                    $('.jFiler-input-dragDrop').hide();
+                },
+                drop: function () {
+                    console.log('file entered');
+                    $('.chat-drop-zone').hide();
+                    $('.jFiler-input-dragDrop').hide();
+                },
+            },
+            files: null,
+            addMore: false,
+            clipBoardPaste: true,
+            excludeName: null,
+            beforeRender: null,
+            afterRender: null,
+            beforeShow: null,
+            beforeSelect: null,
+            onSelect: function(obj) {
+                // showChatInputFile();
+                catchUpFile(obj)
+            },
+            afterShow: null,
+            onEmpty: null,
+            options: null,
+            captions: {
+                drop: "Drop file here to Upload"
+            }
+        });
+
+        if (monkeyUI.screen.data.mode == PARTIALSIZE) {
+            $(".chat-drop-zone").attr('style','width:'+monkeyUI.screen.data.width+'; height:'+monkeyUI.screen.data.height+';');
+        }
+        $('#chat-input').prepend($( ".chat-drop-zone" ).detach());
+
     }
 
     document.addEventListener("dragenter", function( event ) {
