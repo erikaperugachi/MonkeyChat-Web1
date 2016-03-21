@@ -1,11 +1,13 @@
 var path = require('path');
 module.exports = { 
-  entry: path.join(__dirname, 'monkeychat.js'),
-  
+  entry: {
+	monkeyChat: './monkeychat.js',
+    monkeyUI: './monkeyui.js'
+  },
   output: {
     path: path.join(__dirname, 'dist'),
     publicPath: '/monkeychat/dist/',
-    filename: 'monkeyChat.js'
+    filename: '[name].js'
   },
 
   externals: {
