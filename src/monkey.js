@@ -1041,8 +1041,8 @@ var monkey =
 
 	    fileData = cleanFilePrefix(fileData);
 
-	    var binfiledata = mok_convertDataURIToBinary(fileData);
-	    props.size = binfiledata.size;
+	    var binData = mok_convertDataURIToBinary(fileData);
+	    props.size = binData.size;
 
 	    var args = prepareMessageArgs(recipientMonkeyId, props, optionalParams, optionalPush);
 	    args.msg = fileName;
