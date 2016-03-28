@@ -1,6 +1,5 @@
 require('./src/monkey.js');
-//require('./monkeyui.js');
-import { monkeyUI } from './monkeyUI.js';
+require('./monkeyUI.js');
 
 var MONKEY_DEBUG_MODE = false;
 
@@ -28,10 +27,10 @@ var monkeyChat = new function(){
         this.conversationId = conversationId;
         monkeyUI.setChat(view);
         $( document ).ready(function() {
-	        monkeyUI.form = (form != null && form != undefined)
+	        monkeyUI.form = (form != null && form != undefined);
             monkeyUI.drawScene();
             if(form != null && form != undefined) {
-	            monkeyUI.form = true;
+	            //monkeyUI.form = true;
                 monkeyUI.addLoginForm(form);
             }
         });
@@ -111,8 +110,8 @@ var monkeyChat = new function(){
     CMD 208: Close conversation
     */
     $(monkey).on( "onNotification", function( event, mokMessage ){
-        var _notification = mokMessage;
         console.log(mokMessage)
+        var _notification = mokMessage;
         // notification arrived
         var _notType = _notification.protocolCommand;
         var _conversationId = _notification.senderId;
@@ -150,8 +149,8 @@ var monkeyChat = new function(){
             203: open conversation
     */
     $(monkey).on( "onAcknowledge", function( event, mokMessage ){
-        var _acknowledge = mokMessage;
         console.log(mokMessage);
+        var _acknowledge = mokMessage;
         // ack arrived
         var _ackType = _acknowledge.protocolType;
         var _conversationId = _acknowledge.senderId;
@@ -242,7 +241,6 @@ var monkeyChat = new function(){
     /***********************************************/
 
     function defineMessage(message, mokMessage){
-
         var _conversationId = message.recipientId == myUser.monkeyId ? message.senderId : message.recipientId;
         var _conversation = conversations[_conversationId];
         _conversation.lastMessage = message;
@@ -267,17 +265,16 @@ var monkeyChat = new function(){
                 if (message.typeFile == 1) { //audio type
                     monkeyUI.drawAudioMessageBubble(message, _conversationId, false, _status);
                     if(message.dataSource == undefined){
-
                         monkey.downloadFile(mokMessage,function(err,data){
                             if(err){
                                 console.log(err);
                             }else{
                                 var _src = 'data:audio/mpeg;base64,'+data;
-                                monkeyUI.updateDataMessageBubble(message.id, _src);
+                                monkeyUI.updateDataMessageBubble(mokMessage.id, _src);
                             }
                         });
                     }
-                }else if(message.typeFile == 3){ //file type
+                }else if(message.typeFile == 3){ //image type
                     monkeyUI.drawImageMessageBubble(message, _conversationId, false, _status);
                     if(message.dataSource == undefined){
                         monkey.downloadFile(mokMessage,function(err, data){
@@ -285,7 +282,7 @@ var monkeyChat = new function(){
                                 console.log(err);
                             }else{
                                 var _src = 'data:'+mokMessage.props.mime_type+';base64,'+data;
-                                monkeyUI.updateDataMessageBubble(message.id, _src);
+                                monkeyUI.updateDataMessageBubble(mokMessage.id, _src);
                             }
                         });
                     }
@@ -317,10 +314,11 @@ var monkeyChat = new function(){
             return;
         }
         var _eph = ephemeral ? 1 : 0;
-        var _length = messageText.length;
-        var _mokMessage = monkey.sendEncryptedMessage(messageText, currentConversationId,{length:_length, eph:_eph });
-
-        //messageText = findLinks(messageText);
+        var _params = {
+            eph: _eph,
+            length:messageText.length
+        };
+        var _mokMessage = monkey.sendEncryptedMessage(messageText, currentConversationId, _params);
         var _message = new MUIMessage(_mokMessage);
 
         monkeyUI.drawTextMessageBubble(_message, currentConversationId, false, 51);
@@ -329,9 +327,12 @@ var monkeyChat = new function(){
     /************ TO SEND AUDIO MESSAGE ************/
 
     function prepareAudioMessage(audio, ephemeral) {
-
         var _eph = ephemeral ? 1 : 0;
-        var _mokMessage = monkey.sendEncryptedFile(audio.src, currentConversationId, 'audio_.mp3', audio.type, audio.monkeyFileType, true, {eph:_eph, length:audio.duration}, null, function(err, message){
+        var _params = {
+            eph: _eph,
+            length: audio.duration
+        };
+        var _mokMessage = monkey.sendEncryptedFile(audio.src, currentConversationId, 'audio_.mp3', audio.type, audio.monkeyFileType, true, _params, null, function(err, message){
             if(err){
                 console.log(err);
             }else{
@@ -351,14 +352,11 @@ var monkeyChat = new function(){
     /************* TO SEND IMAGE MESSAGE ************/
 
     function prepareImageToSend (file, ephemeral) {
-        
-        var data = file.src.split(',');
-        var onlyDataURL = data[1];
         var _eph = ephemeral ? 1 : 0;
-        var params = {
+        var _params = {
             eph: _eph
         };
-        var _mokMessage = monkey.sendEncryptedFile(file.src, currentConversationId, file.file.name, file.file.type, file.monkeyFileType, true, params, null, function(err, message){
+        var _mokMessage = monkey.sendEncryptedFile(file.src, currentConversationId, file.file.name, file.file.type, file.monkeyFileType, true, _params, null, function(err, message){
             if(err){
                 console.log(err);
             }else{
@@ -376,10 +374,7 @@ var monkeyChat = new function(){
 
     /************* TO SEND FILE MESSAGE ************/
 
-    function prepareFileToSend (file, ephemeral) {
-        
-        var data = file.src.split(',');
-        var onlyDataURL = data[1];
+    function prepareFileToSend (file, ephemeral) { 
         var _eph = ephemeral ? 1 : 0;
         var params = {
             eph: _eph

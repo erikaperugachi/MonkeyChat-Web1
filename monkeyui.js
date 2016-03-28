@@ -1,10 +1,10 @@
+require('./src/jquery.knob.js');
+
 require('fileapi/dist/FileAPI.min.js');
 
 require('jquery.filer/js/jquery.filer.min.js');
 require('jquery.filer/css/jquery.filer.css');
 require('jquery.filer/css/themes/jquery.filer-dragdropbox-theme.css');
-
-//require('./src/jquery.knob.min.js');
 
 import MUIUser from './src/MUIUser.js';
 import MUIConversation from './src/MUIConversation.js';
@@ -20,6 +20,10 @@ window.MUIMessage = MUIMessage;
 // MediaStreamRecorder.js
 var MediaStreamRecorder = require('./src/MediaStreamRecorder.js').MediaStreamRecorder;
 window.StereoRecorder = require('./src/MediaStreamRecorder.js').StereoRecorder;
+
+var $ = require('jquery');
+window.jQuery = $;
+window.$ = $;
 
 // Variable to store the file to send
 var fileCaptured = {}; // save files
@@ -64,13 +68,13 @@ var typeMessageToSend; // text:0 || audio:1 || image:3 || file:4
 
 var inputConf = {}
 
-export var monkeyUI = new function() {
+var monkeyUI = new function() {
     this.wrapperOut = '.mky-wrapper-out';
     this.wrapperIn = '.mky-wrapper-in';
     this.contentConnection = '#mky-content-connection';
     this.contentApp = '#mky-content-app';
     this.contentConversationList = '#mky-conversation-list';
-    this.contentConversationWindow = '#conversation-window';
+    this.contentConversationWindow = '#mky-conversation-window';
     this.contentIntroApp = '#mky-app-intro';
     this.user;
 
@@ -121,9 +125,7 @@ export var monkeyUI = new function() {
             monkeyUI.screen.data.width = conf.screen.data.width;
             monkeyUI.screen.data.height = conf.screen.data.height;
         }
-        monkeyUI.screen.data.width = conf.screen.data.width;
-        monkeyUI.screen.data.height = conf.screen.data.height;
-        monkeyUI.player = conf.player == undefined ? STANDARD : conf.player;
+        monkeyUI.player = conf.player == undefined ? KNOB : conf.player;
     }
 
     this.drawScene = function(){
@@ -136,12 +138,14 @@ export var monkeyUI = new function() {
 
         if( $('.mky-wrapper-out').length <= 0 ){
             var _scene = '';
-            if(this.screen.data.width != undefined && this.screen.data.height != undefined){
+            if(this.screen.data.width != undefined && this.screen.data.height != undefined && this.screen.data.mode == PARTIALSIZE){
                 _scene += '<div class="mky-wrapper-out '+PREFIX+this.screen.data.mode+' '+PREFIX+this.screen.type+'" style="width: '+this.screen.data.width+'; height:30px;">';
             }else{
                 _scene += '<div class="mky-wrapper-out '+PREFIX+this.screen.data.mode+' '+PREFIX+this.screen.type+'">';
             }
-            if(this.screen.type == CLASSIC){
+            if(this.screen.type == FULLSCREEN){
+	            
+            }else if(this.screen.type == CLASSIC){
                 _scene += '<div class="mky-tab">'+
                             '<span class="mky-tablabel"> Want to know more? </span>'+
                             '<div id="mky-w-max"></div>'+
@@ -161,8 +165,13 @@ export var monkeyUI = new function() {
                         '</aside>';
             }
             var _class = this.isConversationList ? 'mky-conversation-with' : 'mky-conversation-only';
-                _scene += '<section id="conversation-window" class="'+_class+'">'+
-                        '</section>'+
+                _scene += '<section id="mky-conversation-window" class="'+_class+'">';
+            if(monkeyUI.screen.data.mode == PARTIALSIZE){
+		        _scene += '<div class="'+PREFIX+monkeyUI.screen.data.mode+' jFiler-input-dragDrop" style="width:'+monkeyUI.screen.data.width+'; height:'+monkeyUI.screen.data.height+';">'+
+		        '<div class="jFiler-input-inner"><div class="jFiler-input-icon"><i class="icon-jfi-cloud-up-o"></i></div><div class="jFiler-input-text">'+
+	        	'<h3>Drop files here</h3></div></div></div>';
+	        }
+            _scene += '</section>'+
                     '</div>'+  
                 '</div>'+
             '</div>';
@@ -220,7 +229,7 @@ export var monkeyUI = new function() {
         var _html = '<div class="mky-spinner">'+
             '<div class="mky-bounce1"></div>'+
             '<div class="mky-bounce2"></div>'+
-            '<div class="bounce3"></div>'+
+            '<div class="mky-bounce3"></div>'+
         '</div>';
         $(contentConnection).prepend(_html);
     }
@@ -253,8 +262,14 @@ export var monkeyUI = new function() {
                         '<div id="mky-w-close"></div>'+
                     '</div>';
         }
-        _html += '</header>'+
-            '<div id="mky-chat-timeline"></div>';
+        _html += '</header>';
+        if(monkeyUI.screen.data.mode == FULLSIZE){
+	        _html += '<div class="'+PREFIX+monkeyUI.screen.data.mode+' jFiler-input-dragDrop">'+
+	        '<div class="jFiler-input-inner"><div class="jFiler-input-icon"><i class="icon-jfi-cloud-up-o"></i></div><div class="jFiler-input-text">'+
+        	'<h3>Drop files here</h3></div></div></div>';
+        }
+        _html += '<div id="mky-chat-timeline"></div>';
+		
         $(content).append(_html);
         initOptionInWindow();
     }
@@ -288,7 +303,7 @@ export var monkeyUI = new function() {
     }
 
     function detectFuntionality(){
-        if (window.location.protocol != "https:"){
+        if (window.location.protocol != "https:" || /iPhone|iPad|iPod/i.test(navigator.userAgent)){
             disabledAudioButton(true);
         }
     }
@@ -299,23 +314,13 @@ export var monkeyUI = new function() {
 
     function drawInput(content, input){
 
-        //drag & drop sizes
-        var dd_height = '';
-        var dd_width = '';
-
-        if (monkeyUI.screen.data.mode == PARTIALSIZE) {
-            dd_height = monkeyUI.screen.data.height;
-            dd_width = monkeyUI.screen.data.width;
-        }
-
         var _html = '<div id="mky-chat-input">'+
             '<div id="mky-divider-chat-input"></div>';
             if (input.isAttachButton) {
                 _html += '<div class="mky-button-input">'+
                             '<button id="mky-button-attach" class="mky-button-icon"></button>'+
                             '<input type="file" name="attach" id="attach-file" style="display:none" accept=".pdf,.xls,.xlsx,.doc,.docx,.ppt,.pptx, image/*">'+
-                        '</div>'+
-                        '<div class="'+PREFIX+monkeyUI.screen.data.mode + ' jFiler-input-dragDrop" style="width:'+dd_width+'; height:'+dd_height+';"><div class="jFiler-input-inner"><div class="jFiler-input-icon"><i class="icon-jfi-cloud-up-o"></i></div><div class="jFiler-input-text"><h3>Drop files here</h3></div></div></div>';
+                        '</div>';
             }
             
             if (input.isAudioButton) {
@@ -790,7 +795,7 @@ export var monkeyUI = new function() {
         _bubble = '<div class="mky-message-line">'+
                     '<div id="'+message.id+'" class="mky-bubble '+_classBubble+'">'+
                         '<div class="mky-message-detail">';
-        if(withName){
+        if(withName && !isOutgoing){
             var _senderName = message.senderName ? message.senderName : 'Unknown';
             var _classUnknown = message.senderName == undefined ? 'user-unknown' : '';
             _bubble += '<span class="mky-message-user-name '+_classUnknown+'" style="color: #'+message.senderColor+'">'+_senderName+'</span>';
@@ -820,7 +825,7 @@ export var monkeyUI = new function() {
         _messagePoint.addClass('mky-bubble-text');
         _messagePoint.addClass(_classTypeBubble);
 
-        var _content = '<span class="mky-message-text">'+_messageText+'</span>';
+        var _content = '<span class="mky-content-text">'+_messageText+'</span>';
         _messagePoint.append(_content);
         scrollToDown();
 
@@ -875,21 +880,22 @@ export var monkeyUI = new function() {
         }
 
         if(this.player == 'knob'){
-            var _content = '<div class="content-audio mky-disabled">'+
-                                '<img id="playAudioBubbleImg'+message.id+'" style="display:block;" onclick="monkeyUI.playAudioBubble('+message.id+');" class="mky-bubble-audio-button mky-bubble-audio-button'+message.id+' playBubbleControl" src="../images/PlayBubble.png">'+
-                                '<img id="pauseAudioBubbleImg'+message.id+'" onclick="monkeyUI.pauseAudioBubble('+message.id+');" class="mky-bubble-audio-button mky-bubble-audio-button'+message.id+'" src="../images/PauseBubble.png">'+
-                                '<input id="play-player_'+message.id+'" class="knob second" data-width="100" data-displayPrevious=true value="0">'+
-                                '<div class="mky-bubble-audio-timer"><span id="mky-minutesBubble'+message.id+'">00</span><span>:</span><span id="mky-secondsBubble'+message.id+'">00</span></div>'+
+	        var _messageId = message.id[0] == '-' ? (message.timestamp*1000) : message.id;
+            var _content = '<div class="mky-content-audio mky-disabled">'+
+                                '<img id="mky-bubble-audio-play-button-'+_messageId+'" style="display:block;" onclick="monkeyUI.playAudioBubble('+_messageId+');" class="mky-bubble-audio-button mky-bubble-audio-button-'+_messageId+' mky-bubble-audio-play-button" src="../images/PlayBubble.png">'+
+                                '<img id="mky-bubble-audio-pause-button-'+_messageId+'" onclick="monkeyUI.pauseAudioBubble('+_messageId+');" class="mky-bubble-audio-button mky-bubble-audio-button-'+_messageId+'" src="../images/PauseBubble.png">'+
+                                '<input id="bubble-audio-player-'+_messageId+'" class="knob second" data-width="100" data-displayPrevious=true value="0">'+
+                                '<div class="mky-bubble-audio-timer"><span id="mky-minutesBubble'+_messageId+'">00</span><span>:</span><span id="mky-secondsBubble'+_messageId+'">00</span></div>'+
                             '</div>'+
-                            '<audio id="audio_'+message.id+'" preload="auto" style="display:none;" controls="" src="'+_dataSource+'"></audio>';
+                            '<audio id="audio_'+_messageId+'" preload="auto" style="display:none;" controls="" src="'+_dataSource+'"></audio>';
             _messagePoint.append(_content);
 
-            createAudiohandlerBubble(message.id,Math.round(message.length));
-            audiobuble = document.getElementById("audio_"+message.id);
+            createAudioHandlerBubble(_messageId,Math.round(message.length));
+            audiobuble = document.getElementById("audio_"+_messageId);
             audiobuble.oncanplay = function() {
-                createAudiohandlerBubble(message.id,Math.round(audiobuble.duration));
-                setDurationTime(message.id);
-                $('#'+message.id+' .content-audio').removeClass('mky-disabled');
+                createAudioHandlerBubble(_messageId,Math.round(audiobuble.duration));
+                setDurationTime(_messageId);
+                $('#'+message.id+' .mky-content-audio').removeClass('mky-disabled');
             };
         }else{
             var _content = '<audio id="audio_'+message.id+'" preload="auto" controls="" src="'+_dataSource+'"></audio>';
@@ -969,7 +975,7 @@ export var monkeyUI = new function() {
                 }          
                             _bubble += '<span class="mky-message-hour">'+defineTime(message.timestamp*1000)+'</span>'+
                                         '</div>'+
-                                        '<span class="mky-message-text">'+_messageText+'</span>'+
+                                        '<span class="mky-content-text">'+_messageText+'</span>'+
                                     '</div>'+
                                 '</div>';             
             }else{
@@ -990,7 +996,7 @@ export var monkeyUI = new function() {
                                                 '<span class="mky-message-timer"> '+defineTimer(_duration)+'</span>'+
                                             '</div>'+
                                         '</div>'+
-                                        '<span class="mky-message-text">Click to read</span>'+
+                                        '<span class="mky-content-text">Click to read</span>'+
                                         '<div class="mky-message-code">'+message.encryptedText+'</div>'+
                                     '</div>'+
                                 '</div>';              
@@ -1024,7 +1030,7 @@ export var monkeyUI = new function() {
                                     '</div>'+
                                 '</div>'+
                                 '<div class="mky-button-message-unsend" onclick="unsendMessage(\''+message.id+'\',\''+conversationId+'\')">x</div>'+
-                                '<span class="mky-message-text">'+_messageText+'</span>'+
+                                '<span class="mky-content-text">'+_messageText+'</span>'+
                             '</div>'+
                         '</div>';
             }else{
@@ -1040,7 +1046,7 @@ export var monkeyUI = new function() {
                                         '</div>'+
                                     '</div>'+
                                     '<div class="mky-button-message-unsend" onclick="unsendMessage(\''+message.id+'\',\''+conversationId+'\')">x</div>'+
-                                    '<span class="mky-message-text">Private Message</span>'+
+                                    '<span class="mky-content-text">Private Message</span>'+
                                 '</div>'+
                             '</div>';
             }
@@ -1098,7 +1104,7 @@ export var monkeyUI = new function() {
                                             '</div>'+
                                         '</div>'+
                                         '<div class="mky-message-icon-define mky-icon-image"></div>'+
-                                        '<span class="mky-message-text">Click to view</span>'+
+                                        '<span class="mky-content-text">Click to view</span>'+
                                         '<div class="mky-message-code">'+message.encryptedText+'</div>'+
                                     '</div>'+
                                 '</div>';
@@ -1129,7 +1135,7 @@ export var monkeyUI = new function() {
                                         '</div>'+
                                     '</div>'+
                                     '<div class="mky-button-message-unsend" onclick="unsendMessage(\''+message.id+'\',\''+conversationId+'\')">x</div>'+
-                                    '<span class="mky-message-text">Private Image</span>'+
+                                    '<span class="mky-content-text">Private Image</span>'+
                                 '</div>'+
                             '</div>';
             }
@@ -1163,10 +1169,10 @@ export var monkeyUI = new function() {
                 }
                         _bubble += '<span class="mky-message-hour">'+defineTime(message.timestamp*1000)+'</span>'+
                                     '</div>'+
-                                    '<div class="content-audio">'+
-                                        '<img id="playAudioBubbleImg'+message.id+'" style="display:block;" onclick="monkeyUI.playAudioBubble('+message.id+');" class="mky-bubble-audio-button mky-bubble-audio-button'+message.id+' playBubbleControl" src="../images/PlayBubble.png">'+
-                                        '<img id="pauseAudioBubbleImg'+message.id+'" onclick="monkeyUI.pauseAudioBubble('+message.id+');" class="mky-bubble-audio-button mky-bubble-audio-button'+message.id+'" src="../images/PauseBubble.png">'+
-                                        '<input id="play-player_'+message.id+'" class="knob second" data-width="100" data-displayPrevious=true value="0">'+
+                                    '<div class="mky-content-audio">'+
+                                        '<img id="mky-player-play-button'+message.id+'" style="display:block;" onclick="monkeyUI.playAudioBubble('+message.id+');" class="mky-bubble-audio-button mky-bubble-audio-button'+message.id+' mky-bubble-audio-play-button" src="../images/PlayBubble.png">'+
+                                        '<img id="mky-bubble-audio-pause-button'+message.id+'" onclick="monkeyUI.pauseAudioBubble('+message.id+');" class="mky-bubble-audio-button mky-bubble-audio-button'+message.id+'" src="../images/PauseBubble.png">'+
+                                        '<input id="bubble-audio-player-'+message.id+'" class="knob second" data-width="100" data-displayPrevious=true value="0">'+
                                         '<div class="mky-bubble-audio-timer"><span id="mky-minutesBubble'+message.id+'">'+("0" + parseInt(message.length/60)).slice(-2)+'</span><span>:</span><span id="mky-secondsBubble'+message.id+'">'+("0" + message.length%60).slice(-2)+'</span></div>'+
                                     '</div>';
                         var _dataSource = message.dataSource != undefined ? message.dataSource : '';    
@@ -1193,7 +1199,7 @@ export var monkeyUI = new function() {
                                         '</div>'+
                                     '</div>'+
                                     '<div class="mky-message-icon-define mky-icon-audio"></div>'+
-                                    '<span class="mky-message-text">Click to listen</span>'+
+                                    '<span class="mky-content-text">Click to listen</span>'+
                                     '<div class="mky-message-code">'+message.encryptedText+'</div>'+
                                 '</div>'+
                             '</div>';
@@ -1211,10 +1217,10 @@ export var monkeyUI = new function() {
                                         '</div>'+
                                     '</div>'+
                                     '<div class="mky-button-message-unsend" onclick="unsendMessage(\''+message.id+'\',\''+conversationId+'\')">x</div>'+
-                                    '<div class="content-audio">'+
-                                        '<img id="playAudioBubbleImg'+message.id+'" style="display:block;" onclick="monkeyUI.playAudioBubble('+message.id+');" class="mky-bubble-audio-button mky-bubble-audio-button'+message.id+' playBubbleControl" src="../images/PlayBubble.png">'+
-                                        '<img id="pauseAudioBubbleImg'+message.id+'" onclick="monkeyUI.pauseAudioBubble('+message.id+');" class="mky-bubble-audio-button mky-bubble-audio-button'+message.id+'" src="../images/PauseBubble.png">'+
-                                        '<input id="play-player_'+message.id+'" class="knob second" data-width="100" data-displayPrevious=true value="0">'+
+                                    '<div class="mky-content-audio">'+
+                                        '<img id="mky-player-play-button'+message.id+'" style="display:block;" onclick="monkeyUI.playAudioBubble('+message.id+');" class="mky-bubble-audio-button mky-bubble-audio-button'+message.id+' mky-bubble-audio-play-button" src="../images/PlayBubble.png">'+
+                                        '<img id="mky-bubble-audio-pause-button'+message.id+'" onclick="monkeyUI.pauseAudioBubble('+message.id+');" class="mky-bubble-audio-button mky-bubble-audio-button'+message.id+'" src="../images/PauseBubble.png">'+
+                                        '<input id="bubble-audio-player-'+message.id+'" class="knob second" data-width="100" data-displayPrevious=true value="0">'+
                                         '<div class="mky-bubble-audio-timer"><span id="mky-minutesBubble'+message.id+'">00</span><span>:</span><span id="mky-secondsBubble'+message.id+'">00</span></div>'+
                                     '</div>'+
                                     '<audio id="audio_'+message.id+'" preload="auto" style="display:none;" controls="" src="'+_dataSource+'"></audio>'+
@@ -1232,7 +1238,7 @@ export var monkeyUI = new function() {
                                     '</div>'+
                                 '</div>'+
                                 '<div class="mky-button-message-unsend" onclick="unsendMessage(\''+message.id+'\',\''+conversationId+'\')">x</div>'+
-                                '<span class="mky-message-text">Private audio</span>'+
+                                '<span class="mky-content-text">Private audio</span>'+
                             '</div>'+
                         '</div>';
             }
@@ -1251,15 +1257,15 @@ export var monkeyUI = new function() {
             updateNotification("Audio",_conversationIdHandling);
         }  
 
-        createAudiohandlerBubble(message.id,Math.round(message.length));
+        createAudioHandlerBubble(message.id,Math.round(message.length));
 
         if(message.eph == 0){
             console.log("audio_"+message.id);
             audiobuble = document.getElementById("audio_"+message.id);
             audiobuble.oncanplay = function() {
-                createAudiohandlerBubble(message.id,Math.round(audiobuble.duration));
+                createAudioHandlerBubble(message.id,Math.round(audiobuble.duration));
                 setDurationTime(message.id);
-                $('#'+messageId+' .content-audio').removeClass('mky-disabled');
+                $('#'+messageId+' .mky-content-audio').removeClass('mky-disabled');
             };
         }
     }
@@ -1320,6 +1326,8 @@ export var monkeyUI = new function() {
             messagePoint.find('.mky-content-image').attr({
               onclick: "monkeyUI.showViewer('"+messageNewId+"','"+_fileName+"')"
             });
+        }else if(messagePoint.find('audio').length > 0){
+	        messagePoint.find('.mky-content-audio').removeClass('mky-disabled');
         }
         
         messagePoint.find('.mky-message-status').removeClass('mky-status-load');
@@ -1364,38 +1372,39 @@ export var monkeyUI = new function() {
     /***********************************************/
 
     // define duration of bubble audio player
-    function createAudiohandlerBubble(timestamp, duration) {
-        $("#play-player_"+timestamp).knob({
-            'min':0,
+    function createAudioHandlerBubble(timestamp, duration) {
+        $("#bubble-audio-player-"+timestamp).knob({
+            'min': 0,
             'max': duration,
-            'angleOffset':-133,
+            'angleOffset': -133,
             'angleArc': 265,
-            'width':100,
+            'width': 100,
             'height': 90,
             'displayInput':false,
             'skin':'tron',
+            'fgColor': '#0276a9',
+            'thickness': 0.7,
             change : function (value) {
-                audiobuble.currentTime=value;
             }
         });
     }
 
-    this.playAudioBubble = function(timestamp) {
-        pauseAllAudio (timestamp);
-        $bubblePlayer = $("#play-player_"+timestamp); //handles the cricle
-        $('.mky-bubble-audio-button'+timestamp).hide();
-        $('#pauseAudioBubbleImg'+timestamp).css('display', 'block');
-        minutesBubbleLabel = document.getElementById("mky-minutesBubble"+timestamp);
-        secondsBubbleLabel = document.getElementById("mky-secondsBubble"+timestamp);
-        audiobuble = document.getElementById("audio_"+timestamp);
+    this.playAudioBubble = function(messageId) {
+        pauseAllAudio (messageId);
+        $bubblePlayer = $("#bubble-audio-player-"+messageId); //handles the cricle
+        $('.mky-bubble-audio-button-'+messageId).hide();
+        $('#mky-bubble-audio-pause-button-'+messageId).css('display', 'block');
+        minutesBubbleLabel = document.getElementById("mky-minutesBubble"+messageId);
+        secondsBubbleLabel = document.getElementById("mky-secondsBubble"+messageId);
+        audiobuble = document.getElementById("audio_"+messageId);
         audiobuble.play();
         playIntervalBubble = setInterval("monkeyUI.updateAnimationBuble()",1000);
         audiobuble.addEventListener("ended",function() {
-            setDurationTime(timestamp);
+            setDurationTime(messageId);
             //this.load();
             $bubblePlayer.val(0).trigger("change");
-            $('#playAudioBubbleImg'+timestamp).css('display', 'block');
-            $('#pauseAudioBubbleImg'+timestamp).css('display', 'none');
+            $('#mky-bubble-audio-play-button-'+messageId).css('display', 'block');
+            $('#mky-bubble-audio-pause-button-'+messageId).css('display', 'none');
             clearInterval(playIntervalBubble);
         });
     }
@@ -1408,8 +1417,8 @@ export var monkeyUI = new function() {
     }
 
     this.pauseAudioBubble = function(timestamp) {
-        $('.mky-bubble-audio-button'+timestamp).hide();
-        $('#playAudioBubbleImg'+timestamp).toggle();
+        $('.mky-bubble-audio-button-'+timestamp).hide();
+        $('#mky-bubble-audio-play-button-'+timestamp).toggle();
         audiobuble.pause();
         clearInterval(playIntervalBubble);
     }
@@ -1422,9 +1431,9 @@ export var monkeyUI = new function() {
                     //console.log(audios[i].id);
                     audios[i].pause();
                     $('.mky-bubble-audio-button').hide();
-                    $('.playBubbleControl').show();
-                    $('#playAudioBubbleImg'+timestamp).hide();
-                    $('#pauseAudioBubbleImg'+timestamp).show();
+                    $('.mky-bubble-audio-play-button').show();
+                    $('#mky-bubble-audio-play-button-'+timestamp).hide();
+                    $('#mky-bubble-audio-pause-button-'+timestamp).show();
                 }   
             }
         }, true);
@@ -1787,3 +1796,5 @@ function getConversationIdHandling(conversationId){
     }
     return result;
 }
+
+window.monkeyUI = monkeyUI;
