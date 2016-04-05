@@ -13,6 +13,9 @@ var myUser = {};
 var callCenterUser;
 var currentConversationId = null; // conversation id of the current chat
 
+// Variable to group chat
+var colorUsers = ["6f067b","00a49e","b3007c","b4d800","e20068","00b2eb","ec870e","84b0b9","3a6a74","bda700","826aa9","af402a","733610","020dd8","7e6565","cd7967","fd78a7","009f62","336633","e99c7a","000000"];
+
 var monkeyChat = new function(){
 
     this.init = init;
@@ -40,7 +43,7 @@ var monkeyChat = new function(){
         monkeyUI.disappearOptionsOutWindow();
         monkeyUI.startLoading();
         if(userObj != null){
-            myUser = new MUIUser(userObj.id, userObj.monkey_id, userObj.name, userObj.privacy, userObj.urlAvatar);
+            myUser = new MUIUser(userObj.id, userObj.monkey_id, 'Support: '+userObj.name, userObj.privacy, userObj.urlAvatar);
         }
 
         monkey.init(monkeyChat.appId, monkeyChat.appKey, userObj, false, MONKEY_DEBUG_MODE);
@@ -59,15 +62,46 @@ var monkeyChat = new function(){
             myUser.monkeyId = eObject.monkey_id;
         }
 
-        if (isEmpty(users) || isEmpty(conversations)) {
-            callCenterUser = new MUIUser(null, monkeyChat.conversationId, 'Call Center', 0, 'http://cdn.criptext.com/MonkeyUI/images/userdefault.png');
+        if ((isEmpty(users) || isEmpty(conversations)) && isConversationGroup(monkeyChat.conversationId)) {
+	        console.log(monkeyChat.conversationId);
+	        monkey.getInfoById(monkeyChat.conversationId, function(error, data){
+		        if(data != undefined){
+			        console.log(data);
+			        var _members = data.members;
+			        var _info = {avatar: '', name: myUser.name}
+			        monkey.createGroup(_members, _info, null, null, function(error, data){
+				        if(data != undefined){
+				        	console.log(data);
+				        	
+				        	for(var _userId in data.members_info) {
+					        	console.log(_userId);
+						        var _tmpUser = new MUIUser(null, _userId, data.members_info[_userId].name, 0, 'http://cdn.criptext.com/MonkeyUI/images/userdefault.png');
+						        users[_userId] = _tmpUser;
+						    }
+				        	
+				        	var _tmpConversation = new MUIConversation(data.group_id, data.group_info.name, 'http://cdn.criptext.com/MonkeyUI/images/userdefault.png', data.members);
+				        	conversations[data.group_id] = _tmpConversation;
+				        	monkeyUI.loadDataScreen(myUser);
+							openConversation(data.group_id);
+				        	
+				        }else{
+					        console.log(error);
+				        }
+			        });
+		        }else{
+			        console.log(error);
+		        }
+	        });
+        }else if((isEmpty(users) || isEmpty(conversations)) && !isConversationGroup(monkeyChat.conversationId)){
+	        callCenterUser = new MUIUser(null, monkeyChat.conversationId, 'Call Center', 0, 'http://cdn.criptext.com/MonkeyUI/images/userdefault.png');
             var conversation = new MUIConversation(callCenterUser.monkeyId, callCenterUser.name, callCenterUser.urlAvatar);
             users[callCenterUser.monkeyId] = callCenterUser;
             conversations[callCenterUser.monkeyId] = conversation;
+            
+            monkeyUI.loadDataScreen(myUser);
+			openConversation(callCenterUser.monkeyId);
         }
         
-        monkeyUI.loadDataScreen(myUser);
-        openConversation(callCenterUser.monkeyId);
     });
 
     // --------------- ON DISCONNECT ----------------- //
@@ -88,7 +122,11 @@ var monkeyChat = new function(){
     */
     $(monkey).on( "onMessage", function(event, mokMessage){
         console.log(mokMessage);
-        if (mokMessage.senderId == callCenterUser.monkeyId && mokMessage.recipientId == myUser.monkeyId) {
+        if ( (callCenterUser == undefined) && (mokMessage.recipientId == currentConversationId) ){
+	        var _message = new MUIMessage(mokMessage);
+	        messages[_message.id] = _message; // store message
+	        defineMessage(_message, mokMessage);
+        }else if(mokMessage.senderId == currentConversationId && mokMessage.recipientId == myUser.monkeyId) {
             var _message = new MUIMessage(mokMessage);
             messages[_message.id] = _message; // store message
             defineMessage(_message, mokMessage);
@@ -128,7 +166,7 @@ var monkeyChat = new function(){
                     break;
                     default:
                         break;
-                } 
+                }
             }
             break;
             case 203:{ // open arrived
@@ -245,6 +283,12 @@ var monkeyChat = new function(){
         var _conversation = conversations[_conversationId];
         _conversation.lastMessage = message;
         
+        if(isConversationGroup(_conversationId)){
+	        var _user = users[message.senderId];
+	        message.setSenderName(_user.name);
+	        message.setSenderColor(_conversation.members != undefined ? colorUsers[_conversation.members.indexOf(message.senderId)] : colorUsers[0]);
+        }
+        
         var _isOutgoing = message.senderId == myUser.monkeyId ? 1 : 0;
         var _status = 0;
         if(_isOutgoing == 1){
@@ -258,12 +302,12 @@ var monkeyChat = new function(){
 
         switch(message.protocolType){
             case 1: // Text
-                monkeyUI.drawTextMessageBubble(message, _conversationId, false, _status);
+                monkeyUI.drawTextMessageBubble(message, _conversationId, isConversationGroup(_conversationId), _status);
                 break;
 
             case 2: // File
                 if (message.typeFile == 1) { //audio type
-                    monkeyUI.drawAudioMessageBubble(message, _conversationId, false, _status);
+                    monkeyUI.drawAudioMessageBubble(message, _conversationId, isConversationGroup(_conversationId), _status);
                     if(message.dataSource == undefined){
                         monkey.downloadFile(mokMessage,function(err,data){
                             if(err){
@@ -275,7 +319,7 @@ var monkeyChat = new function(){
                         });
                     }
                 }else if(message.typeFile == 3){ //image type
-                    monkeyUI.drawImageMessageBubble(message, _conversationId, false, _status);
+                    monkeyUI.drawImageMessageBubble(message, _conversationId, isConversationGroup(_conversationId), _status);
                     if(message.dataSource == undefined){
                         monkey.downloadFile(mokMessage,function(err, data){
                             if(err){
@@ -288,7 +332,7 @@ var monkeyChat = new function(){
                     }
                 }else if(message.typeFile == 4){ //file type
                     console.log('file received');
-                    monkeyUI.drawFileMessageBubble(message, _conversationId, false, _status);
+                    monkeyUI.drawFileMessageBubble(message, _conversationId, isConversationGroup(_conversationId), _status);
                     if(message.dataSource == undefined){
                         monkey.downloadFile(mokMessage,function(err, data){
                             if(err){
@@ -321,7 +365,7 @@ var monkeyChat = new function(){
         var _mokMessage = monkey.sendEncryptedMessage(messageText, currentConversationId, _params);
         var _message = new MUIMessage(_mokMessage);
 
-        monkeyUI.drawTextMessageBubble(_message, currentConversationId, false, 51);
+        monkeyUI.drawTextMessageBubble(_message, currentConversationId, isConversationGroup(currentConversationId), 51);
     }
 
     /************ TO SEND AUDIO MESSAGE ************/
@@ -345,7 +389,7 @@ var monkeyChat = new function(){
         _message.setDataSource(audio.src);
         var _status = 0;
 
-        monkeyUI.drawAudioMessageBubble(_message, currentConversationId, false, _status, audio.oldId);
+        monkeyUI.drawAudioMessageBubble(_message, currentConversationId, isConversationGroup(currentConversationId), _status, audio.oldId);
         monkeyUI.showChatInput();
     }
 
@@ -369,7 +413,7 @@ var monkeyChat = new function(){
         _message.setDataSource(file.src);
         var _status = 0;
         
-        monkeyUI.drawImageMessageBubble(_message, currentConversationId, false,_status);
+        monkeyUI.drawImageMessageBubble(_message, currentConversationId, isConversationGroup(currentConversationId), _status);
     }
 
     /************* TO SEND FILE MESSAGE ************/
@@ -393,7 +437,7 @@ var monkeyChat = new function(){
         _message.filesize = file.file.size;
         var _status = 0;
         
-        monkeyUI.drawFileMessageBubble(_message, currentConversationId, false,_status);
+        monkeyUI.drawFileMessageBubble(_message, currentConversationId, isConversationGroup(currentConversationId), _status);
     }
 
     /***********************************************/
@@ -408,6 +452,15 @@ var monkeyChat = new function(){
       }
       return true;
     }
+    
+    function isConversationGroup(conversationId){
+	    var result = false;
+	    if(conversationId.indexOf("G:") >= 0){
+	        result = true;
+	    }
+	    return result;
+	}
+
 };
 
 window.monkeyChat = monkeyChat;
