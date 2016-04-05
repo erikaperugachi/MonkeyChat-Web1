@@ -131,7 +131,7 @@ var monkeyUI = new function() {
     this.drawScene = function(){
 
         var e = document.createElement("link");
-        e.href = "https://cdn.criptext.com/MonkeyUI/styles/chat7.css", e.type = "text/css", e.rel = "stylesheet", document.getElementsByTagName("head")[0].appendChild(e)
+        e.href = "https://cdn.criptext.com/MonkeyUI/styles/chat1.css", e.type = "text/css", e.rel = "stylesheet", document.getElementsByTagName("head")[0].appendChild(e)
 
         var ec = document.createElement("link");
         ec.href = "https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css", ec.type = "text/css", ec.rel = "stylesheet", document.getElementsByTagName("head")[0].appendChild(ec)
@@ -360,7 +360,7 @@ var monkeyUI = new function() {
                                 '</div>';
             }
             
-        _html += '<div class="mky-signature">Powered by <a class="mky-signature-link" target="_blank" href="http://criptext.com/">Criptext</a></div></div>';
+        _html += '</div><div class="mky-signature">Powered by <a class="mky-signature-link" target="_blank" href="http://criptext.com/">Criptext</a></div>';
         $(content).append(_html);
         initInputFunctionality();
     }

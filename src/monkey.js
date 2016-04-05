@@ -159,7 +159,7 @@ var monkey =
 	    this.secretKey = null;
 	    this.keyStore = null;
 	    this.session.expiring = 0;
-	    this.domainUrl = "secure.criptext.com";
+	    this.domainUrl = "monkey.criptext.com";
 	    this.status = STATUS.OFFLINE; // offline default
 	    this.lastTimestamp = 0;
 	    this.lastMessageId = 0;
@@ -1282,21 +1282,26 @@ var monkey =
 	locKey = string,
 	locArgs = array
 	 */
-	function generateLocalizedPush(locKey, locArgs) {
-	    return {
-	        "text": stringMessage,
+	function generateLocalizedPush(locKey, locArgs, defaultText, sound) {
+	    var localizedPush = {
 	        "iosData": {
 	            "alert": {
 	                "loc-key": locKey,
 	                "loc-args": locArgs
 	            },
-	            "sound": "default"
+	            "sound": sound ? sound : "default"
 	        },
 	        "andData": {
 	            "loc-key": locKey,
 	            "loc-args": locArgs
 	        }
 	    };
+
+	    if (defaultText) {
+	        localizedPush.text = defaultText;
+	    }
+
+	    return localizedPush;
 	}
 	function getExtention(filename) {
 	    var arr = filename.split('.');

@@ -61,6 +61,9 @@
 	var callCenterUser;
 	var currentConversationId = null; // conversation id of the current chat
 
+	// Variable to group chat
+	var colorUsers = ["6f067b", "00a49e", "b3007c", "b4d800", "e20068", "00b2eb", "ec870e", "84b0b9", "3a6a74", "bda700", "826aa9", "af402a", "733610", "020dd8", "7e6565", "cd7967", "fd78a7", "009f62", "336633", "e99c7a", "000000"];
+
 	var monkeyChat = new function () {
 
 	    this.init = init;
@@ -88,7 +91,7 @@
 	        monkeyUI.disappearOptionsOutWindow();
 	        monkeyUI.startLoading();
 	        if (userObj != null) {
-	            myUser = new MUIUser(userObj.id, userObj.monkey_id, userObj.name, userObj.privacy, userObj.urlAvatar);
+	            myUser = new MUIUser(userObj.id, userObj.monkey_id, 'Support: ' + userObj.name, userObj.privacy, userObj.urlAvatar);
 	        }
 
 	        monkey.init(monkeyChat.appId, monkeyChat.appKey, userObj, false, MONKEY_DEBUG_MODE);
@@ -107,15 +110,44 @@
 	            myUser.monkeyId = eObject.monkey_id;
 	        }
 
-	        if (isEmpty(users) || isEmpty(conversations)) {
+	        if ((isEmpty(users) || isEmpty(conversations)) && isConversationGroup(monkeyChat.conversationId)) {
+	            console.log(monkeyChat.conversationId);
+	            monkey.getInfoById(monkeyChat.conversationId, function (error, data) {
+	                if (data != undefined) {
+	                    console.log(data);
+	                    var _members = data.members;
+	                    var _info = { avatar: '', name: myUser.name };
+	                    monkey.createGroup(_members, _info, null, null, function (error, data) {
+	                        if (data != undefined) {
+	                            console.log(data);
+
+	                            for (var _userId in data.members_info) {
+	                                console.log(_userId);
+	                                var _tmpUser = new MUIUser(null, _userId, data.members_info[_userId].name, 0, 'http://cdn.criptext.com/MonkeyUI/images/userdefault.png');
+	                                users[_userId] = _tmpUser;
+	                            }
+
+	                            var _tmpConversation = new MUIConversation(data.group_id, data.group_info.name, 'http://cdn.criptext.com/MonkeyUI/images/userdefault.png', data.members);
+	                            conversations[data.group_id] = _tmpConversation;
+	                            monkeyUI.loadDataScreen(myUser);
+	                            openConversation(data.group_id);
+	                        } else {
+	                            console.log(error);
+	                        }
+	                    });
+	                } else {
+	                    console.log(error);
+	                }
+	            });
+	        } else if ((isEmpty(users) || isEmpty(conversations)) && !isConversationGroup(monkeyChat.conversationId)) {
 	            callCenterUser = new MUIUser(null, monkeyChat.conversationId, 'Call Center', 0, 'http://cdn.criptext.com/MonkeyUI/images/userdefault.png');
 	            var conversation = new MUIConversation(callCenterUser.monkeyId, callCenterUser.name, callCenterUser.urlAvatar);
 	            users[callCenterUser.monkeyId] = callCenterUser;
 	            conversations[callCenterUser.monkeyId] = conversation;
-	        }
 
-	        monkeyUI.loadDataScreen(myUser);
-	        openConversation(callCenterUser.monkeyId);
+	            monkeyUI.loadDataScreen(myUser);
+	            openConversation(callCenterUser.monkeyId);
+	        }
 	    });
 
 	    // --------------- ON DISCONNECT ----------------- //
@@ -136,7 +168,11 @@
 	    */
 	    $(monkey).on("onMessage", function (event, mokMessage) {
 	        console.log(mokMessage);
-	        if (mokMessage.senderId == callCenterUser.monkeyId && mokMessage.recipientId == myUser.monkeyId) {
+	        if (callCenterUser == undefined && mokMessage.recipientId == currentConversationId) {
+	            var _message = new MUIMessage(mokMessage);
+	            messages[_message.id] = _message; // store message
+	            defineMessage(_message, mokMessage);
+	        } else if (mokMessage.senderId == currentConversationId && mokMessage.recipientId == myUser.monkeyId) {
 	            var _message = new MUIMessage(mokMessage);
 	            messages[_message.id] = _message; // store message
 	            defineMessage(_message, mokMessage);
@@ -306,6 +342,12 @@
 	        var _conversation = conversations[_conversationId];
 	        _conversation.lastMessage = message;
 
+	        if (isConversationGroup(_conversationId)) {
+	            var _user = users[message.senderId];
+	            message.setSenderName(_user.name);
+	            message.setSenderColor(_conversation.members != undefined ? colorUsers[_conversation.members.indexOf(message.senderId)] : colorUsers[0]);
+	        }
+
 	        var _isOutgoing = message.senderId == myUser.monkeyId ? 1 : 0;
 	        var _status = 0;
 	        if (_isOutgoing == 1) {
@@ -320,14 +362,14 @@
 	        switch (message.protocolType) {
 	            case 1:
 	                // Text
-	                monkeyUI.drawTextMessageBubble(message, _conversationId, false, _status);
+	                monkeyUI.drawTextMessageBubble(message, _conversationId, isConversationGroup(_conversationId), _status);
 	                break;
 
 	            case 2:
 	                // File
 	                if (message.typeFile == 1) {
 	                    //audio type
-	                    monkeyUI.drawAudioMessageBubble(message, _conversationId, false, _status);
+	                    monkeyUI.drawAudioMessageBubble(message, _conversationId, isConversationGroup(_conversationId), _status);
 	                    if (message.dataSource == undefined) {
 	                        monkey.downloadFile(mokMessage, function (err, data) {
 	                            if (err) {
@@ -340,7 +382,7 @@
 	                    }
 	                } else if (message.typeFile == 3) {
 	                    //image type
-	                    monkeyUI.drawImageMessageBubble(message, _conversationId, false, _status);
+	                    monkeyUI.drawImageMessageBubble(message, _conversationId, isConversationGroup(_conversationId), _status);
 	                    if (message.dataSource == undefined) {
 	                        monkey.downloadFile(mokMessage, function (err, data) {
 	                            if (err) {
@@ -354,7 +396,7 @@
 	                } else if (message.typeFile == 4) {
 	                    //file type
 	                    console.log('file received');
-	                    monkeyUI.drawFileMessageBubble(message, _conversationId, false, _status);
+	                    monkeyUI.drawFileMessageBubble(message, _conversationId, isConversationGroup(_conversationId), _status);
 	                    if (message.dataSource == undefined) {
 	                        monkey.downloadFile(mokMessage, function (err, data) {
 	                            if (err) {
@@ -387,7 +429,7 @@
 	        var _mokMessage = monkey.sendEncryptedMessage(messageText, currentConversationId, _params);
 	        var _message = new MUIMessage(_mokMessage);
 
-	        monkeyUI.drawTextMessageBubble(_message, currentConversationId, false, 51);
+	        monkeyUI.drawTextMessageBubble(_message, currentConversationId, isConversationGroup(currentConversationId), 51);
 	    }
 
 	    /************ TO SEND AUDIO MESSAGE ************/
@@ -411,7 +453,7 @@
 	        _message.setDataSource(audio.src);
 	        var _status = 0;
 
-	        monkeyUI.drawAudioMessageBubble(_message, currentConversationId, false, _status, audio.oldId);
+	        monkeyUI.drawAudioMessageBubble(_message, currentConversationId, isConversationGroup(currentConversationId), _status, audio.oldId);
 	        monkeyUI.showChatInput();
 	    }
 
@@ -435,7 +477,7 @@
 	        _message.setDataSource(file.src);
 	        var _status = 0;
 
-	        monkeyUI.drawImageMessageBubble(_message, currentConversationId, false, _status);
+	        monkeyUI.drawImageMessageBubble(_message, currentConversationId, isConversationGroup(currentConversationId), _status);
 	    }
 
 	    /************* TO SEND FILE MESSAGE ************/
@@ -459,7 +501,7 @@
 	        _message.filesize = file.file.size;
 	        var _status = 0;
 
-	        monkeyUI.drawFileMessageBubble(_message, currentConversationId, false, _status);
+	        monkeyUI.drawFileMessageBubble(_message, currentConversationId, isConversationGroup(currentConversationId), _status);
 	    }
 
 	    /***********************************************/
@@ -473,6 +515,14 @@
 	            }
 	        }
 	        return true;
+	    }
+
+	    function isConversationGroup(conversationId) {
+	        var result = false;
+	        if (conversationId.indexOf("G:") >= 0) {
+	            result = true;
+	        }
+	        return result;
 	    }
 	}();
 
@@ -10354,7 +10404,7 @@
 	jQueryScriptOutputted=true;var $script=__webpack_require__(9);$script("//ajax.googleapis.com/ajax/libs/jquery/2.0.0/jquery.min.js",function(){console.log("Monkey is ready");});} //setTimeout("initJQuery()", 50);
 	}else {$(function(){ //do anything that needs to be done on document.ready
 	console.log("Monkey is ready");});}}initJQuery(); /* Start monkey,js implementation */ //updates from feeds
-	var socketConnection=null;var monkey=new function(){this.session={id:null,serverPublic:null,userData:null};this.appKey=null;this.secretKey=null;this.keyStore=null;this.session.expiring=0;this.domainUrl="secure.criptext.com";this.status=STATUS.OFFLINE; // offline default
+	var socketConnection=null;var monkey=new function(){this.session={id:null,serverPublic:null,userData:null};this.appKey=null;this.secretKey=null;this.keyStore=null;this.session.expiring=0;this.domainUrl="monkey.criptext.com";this.status=STATUS.OFFLINE; // offline default
 	this.lastTimestamp=0;this.lastMessageId=0;this.init=function(appKey,secretKey,userObj,optionalExpiring,optionalDebuging){this.appKey=appKey;this.secretKey=secretKey;this.session.userData=userObj; // validate JSON String
 	this.keyStore={};this.debugingMode=false;optionalExpiring?this.session.expiring=1:this.session.expiring=0;optionalDebuging?this.debugingMode=true:this.debugingMode=false;if(userObj){userObj.monkey_id?this.session.id=userObj.monkey_id:this.session.id=null;}console.log("====  init domain "+this.domainUrl);startSession();};this.generateLocalizedPush=generateLocalizedPush; //network
 	this.sendMessage=sendMessage;this.sendEncryptedMessage=sendEncryptedMessage;this.sendOpenToUser=sendOpenToUser;this.sendNotification=sendNotification;this.publish=publish;this.getPendingMessages=getPendingMessages; //http
@@ -10430,7 +10480,7 @@
 	}function generateStandardPush(stringMessage){return {"text":stringMessage,"iosData":{"alert":stringMessage,"sound":"default"},"andData":{"alert":stringMessage}};} /*
 		locKey = string,
 		locArgs = array
-		 */function generateLocalizedPush(locKey,locArgs){return {"text":stringMessage,"iosData":{"alert":{"loc-key":locKey,"loc-args":locArgs},"sound":"default"},"andData":{"loc-key":locKey,"loc-args":locArgs}};}function getExtention(filename){var arr=filename.split('.');var extension=arr[arr.length-1];return extension;}function downloadFile(message,onComplete){var basic=getAuthParamsBtoA(monkey.appKey+":"+monkey.secretKey); //setup request url
+		 */function generateLocalizedPush(locKey,locArgs,defaultText,sound){var localizedPush={"iosData":{"alert":{"loc-key":locKey,"loc-args":locArgs},"sound":sound?sound:"default"},"andData":{"loc-key":locKey,"loc-args":locArgs}};if(defaultText){localizedPush.text=defaultText;}return localizedPush;}function getExtention(filename){var arr=filename.split('.');var extension=arr[arr.length-1];return extension;}function downloadFile(message,onComplete){var basic=getAuthParamsBtoA(monkey.appKey+":"+monkey.secretKey); //setup request url
 	var reqUrl=monkey.domainUrl+"/file/open/"+message.text+"/base64";if(monkey.debugingMode){ //no ssl
 	reqUrl="http://"+reqUrl;}else {reqUrl="https://"+reqUrl;}$.ajax({type:"GET",url:reqUrl,xhrFields:{withCredentials:true},beforeSend:function beforeSend(xhr){xhr.setRequestHeader('Accept','*/*');xhr.setRequestHeader("Authorization","Basic "+basic);},success:function success(fileData){console.log("Monkey - Download File OK");decryptDownloadedFile(fileData,message,function(error,finalData){if(error){console.log("Monkey - Fail to decrypt downloaded file");return onComplete(error);}onComplete(null,finalData);}); // fileCont = monkey.decryptFile(respObj, sid);
 	// var gunzip = new Zlib.Gunzip(fileCont);
@@ -10631,7 +10681,7 @@
 	    this.drawScene = function () {
 
 	        var e = document.createElement("link");
-	        e.href = "https://cdn.criptext.com/MonkeyUI/styles/chat7.css", e.type = "text/css", e.rel = "stylesheet", document.getElementsByTagName("head")[0].appendChild(e);
+	        e.href = "https://cdn.criptext.com/MonkeyUI/styles/chat1.css", e.type = "text/css", e.rel = "stylesheet", document.getElementsByTagName("head")[0].appendChild(e);
 
 	        var ec = document.createElement("link");
 	        ec.href = "https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css", ec.type = "text/css", ec.rel = "stylesheet", document.getElementsByTagName("head")[0].appendChild(ec);
@@ -10800,7 +10850,7 @@
 	            _html += '<div class="mky-button-input">' + '<button id="mky-button-send-ephemeral" class="mky-button-icon timer_icon"></button>' + '</div>';
 	        }
 
-	        _html += '<div class="mky-signature">Powered by <a class="mky-signature-link" target="_blank" href="http://criptext.com/">Criptext</a></div></div>';
+	        _html += '</div><div class="mky-signature">Powered by <a class="mky-signature-link" target="_blank" href="http://criptext.com/">Criptext</a></div>';
 	        $(content).append(_html);
 	        initInputFunctionality();
 	    }
