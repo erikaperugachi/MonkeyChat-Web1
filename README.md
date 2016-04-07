@@ -1,4 +1,29 @@
 # MonkeyChat-Web
+## MonkeyChat CDN
+* If using monkeyChat it is not necessary to use monkeyUI.
+Paste the following code into the <head> section of your site's HTML:
+```
+<script type="text/javascript" src="https://cdn.criptext.com/monkeyChat.js"></script>
+```
+
+### monkeyChat.init(String, String, String, Obj, Obj)
+To start setup chat.
+```
+  var monkeyChatView = {
+    screen: {
+      type: 'classic',
+      data: {
+        width: '380px',
+        height: '500px'
+      },
+    }
+  };
+  var form = '<div id="my-login">'+
+		'<input type="text" id="user_name">'+
+		'<input type="button" value="Login" id="submit_login">'+
+	'</div>';
+  monkeyChat.init(appID, appKey, conversationID, monkeyChatView, form);
+```
 
 ## MonkeyUI CDN
 Paste the following code into the <head> section of your site's HTML:
@@ -22,7 +47,7 @@ Setup view to draw
 ```
 
 ### monkeyUI.form
-To confirm that you chat need to add your own form session.
+To confirm that your chat needs to add your own form session.
 ```
   monkeyUI.form = true;
 ```
@@ -44,7 +69,7 @@ To add your own form session.
 ```
 
 ### Trigger: 'quickStart'
-To start quick start without form session, when open the tab.
+Quick start chat without form, when opening the tab.
 ```
   $(monkeyUI).on('quickStart', function(event, file){
   });
@@ -57,13 +82,13 @@ Call the loading effect to appear on screen.
 ```
 
 ### monkeyUI.stopLoading()
-Call the loading effect to disappear on screen.
+Call the loading effect to disappear from the screen.
 ```
   monkeyUI.stopLoading();
 ```
 
 ### monkeyUI.loadDataScreen(MUIUser)
-To load data about user lo login.
+To load data about user login.
 ```
   var myUser = new MUIUser(userId, monkeyId, userName, 0, userUrlAvatar);
   monkeyUI.loadDataScreen(myUser);
@@ -107,35 +132,35 @@ To draw file message bubble.
 ```
 
 ### monkeyUI.updateDataMessageBubble(String, String);
-To update the src data on media message.
+To update the src data of media message.
 ```
   monkeyUI.updateDataMessageBubble(messageId, dataBase64);
 ```
 
 ### Inputs
 ### Trigger: 'textMessage'
-Receive the text message that input generate.
+Receive the text message that input generates.
 ```
   $(monkeyUI).on('textMessage', function(event, text){
   });
 ```
 
 ### Trigger: 'imageMessage'
-Receive the image message that input generate.
+Receive the image message that input generates.
 ```
   $(monkeyUI).on('imageMessage', function(event, file){
   });
 ```
 
 ### Trigger: 'audioMessage'
-Receive the audio message that input generate.
+Receive the audio message that input generates.
 ```
   $(monkeyUI).on('audioMessage', function(event, audio, messageOldId){
   });
 ```
 
 ### Trigger: 'fileMessage'
-Receive the file message that input generate.
+Receive the file message that input generates.
 ```
   $(monkeyUI).on('fileMessage', function(event, file){
   });
@@ -162,7 +187,7 @@ To update typing status conversation.
 
 ### Status messages
 ### monkeyUI.updateStatusReadMessageBubble(String)
-To update read status of outgoing message, when the recipient open the sender conversation.
+To update read status of outgoing message, when the recipient opens the sender conversation.
 ```
   monkeyUI.updateStatusReadMessageBubble(conversationId);
 ```
@@ -185,29 +210,3 @@ The following options are supported in view:
 type: 'classic' | 'fullscreen'
 If use 'classic' add the data:
 data: {width: '380px',height: '500px'}
-
-## MonkeyChat CDN
-* If use monkeyChat it is no necessary to use monkeyUI.
-Paste the following code into the <head> section of your site's HTML:
-```
-<script type="text/javascript" src="https://cdn.criptext.com/monkeyChat.js"></script>
-```
-
-### monkeyChat.init(String, String, String, Obj, Obj)
-To start setup chat.
-```
-  var monkeyChatView = {
-    screen: {
-      type: 'classic',
-      data: {
-        width: '380px',
-        height: '500px'
-      },
-    }
-  };
-  var form = '<div id="my-login">'+
-		'<input type="text" id="user_name">'+
-		'<input type="button" value="Login" id="submit_login">'+
-	'</div>';
-  monkeyChat.init(appID, appKey, conversationID, monkeyChatView, form);
-```
