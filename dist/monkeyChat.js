@@ -10680,11 +10680,11 @@
 
 	    this.drawScene = function () {
 
-	        var e = document.createElement("link");
-	        e.href = "https://cdn.criptext.com/MonkeyUI/styles/chat1.css", e.type = "text/css", e.rel = "stylesheet", document.getElementsByTagName("head")[0].appendChild(e);
+	        var e = document.createElement('link');
+	        e.href = 'https://cdn.criptext.com/MonkeyUI/styles/chat2.css', e.type = 'text/css', e.rel = 'stylesheet', document.getElementsByTagName('head')[0].appendChild(e);
 
-	        var ec = document.createElement("link");
-	        ec.href = "https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css", ec.type = "text/css", ec.rel = "stylesheet", document.getElementsByTagName("head")[0].appendChild(ec);
+	        var ec = document.createElement('link');
+	        ec.href = 'https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css', ec.type = 'text/css', ec.rel = 'stylesheet', document.getElementsByTagName('head')[0].appendChild(ec);
 
 	        if ($('.mky-wrapper-out').length <= 0) {
 	            var _scene = '';
@@ -11282,14 +11282,15 @@
 	            var _classUnknown = message.senderName == undefined ? 'user-unknown' : '';
 	            _bubble += '<span class="mky-message-user-name ' + _classUnknown + '" style="color: #' + message.senderColor + '">' + _senderName + '</span>';
 	        }
-	        _bubble += '<span class="mky-message-hour">' + defineTime(message.timestamp * 1000) + '</span>';
 	        if (isOutgoing) {
 	            _bubble += '<div class="mky-message-status ' + _classStatus + '">';
 	            if (status != 0) {
 	                _bubble += '<i class="fa fa-check"></i>';
 	            }
+	            _bubble += '</div>';
 	        }
-	        _bubble += '</div>' + '</div>' + '</div>';
+	        _bubble += '<span class="mky-message-hour">' + defineTime(message.timestamp * 1000) + '</span>';
+	        _bubble += '</div>' + '</div>';
 
 	        return _bubble;
 	    }
