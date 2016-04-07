@@ -3,7 +3,7 @@
 * If using monkeyChat it is not necessary to use monkeyUI.
 Paste the following code into the <head> section of your site's HTML:
 ```
-<script type="text/javascript" src="https://cdn.criptext.com/monkeyChat.js"></script>
+<script type="text/javascript" src="https://cdn.criptext.com/v1.1.0/monkeyChat.js"></script>
 ```
 
 ### monkeyChat.init(String, String, String, Obj, Obj)
@@ -28,7 +28,7 @@ To start setup chat.
 ## MonkeyUI CDN
 Paste the following code into the <head> section of your site's HTML:
 ```
-<script type="text/javascript" src="https://cdn.criptext.com/monkeyUI.js"></script>
+<script type="text/javascript" src="https://cdn.criptext.com/v1.1.0/monkeyUI.js"></script>
 ```
 
 ### monkeyUI.setChat(Obj)
@@ -119,7 +119,7 @@ To draw audio message bubble.
   monkeyUI.drawAudioMessageBubble(message, conversationId, isGroupChat, status);
 ```
 
-### monkeyUI.drawImageMessageBubble(MUupdateStatusMessageBubbleIMessage, String, boolean, int);
+### monkeyUI.drawImageMessageBubble(MUIMessage, String, boolean, int);
 To draw image message bubble.
 ```
   monkeyUI.drawImageMessageBubble(message, conversationId, isGroupChat, status);
