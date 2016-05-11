@@ -1,4 +1,4 @@
-require('./src/jquery.knob.js');
+require('jquery-knob/dist/jquery.knob.min.js');
 
 require('fileapi/dist/FileAPI.min.js');
 
@@ -130,11 +130,11 @@ var monkeyUI = new function() {
 
     this.drawScene = function(){
 
-        var e = document.createElement("link");
-        e.href = "https://cdn.criptext.com/MonkeyUI/styles/chat1.css", e.type = "text/css", e.rel = "stylesheet", document.getElementsByTagName("head")[0].appendChild(e)
+        var e = document.createElement('link');
+        e.href = 'https://cdn.criptext.com/MonkeyUI/styles/chat3.css', e.type = 'text/css', e.rel = 'stylesheet', document.getElementsByTagName('head')[0].appendChild(e)
 
-        var ec = document.createElement("link");
-        ec.href = "https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css", ec.type = "text/css", ec.rel = "stylesheet", document.getElementsByTagName("head")[0].appendChild(ec)
+        var ec = document.createElement('link');
+        ec.href = 'https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css', ec.type = 'text/css', ec.rel = 'stylesheet', document.getElementsByTagName('head')[0].appendChild(ec)
 
         if( $('.mky-wrapper-out').length <= 0 ){
             var _scene = '';
@@ -375,7 +375,6 @@ var monkeyUI = new function() {
         $('#mky-button-cancel-audio').parent().addClass("mky-disappear");
         $('#mky-button-record-audio').parent().removeClass("mky-disappear");
         $('#mky-button-send-message').parent().addClass("mky-disappear");
-        $('#mky-button-record-audio').parent().removeClass("mky-disappear");
         $('#mky-button-send-ephemeral').removeClass('enable_timer');
         $("#mky-minutes").html('00');
         $("#mky-seconds").html('00');
@@ -800,16 +799,16 @@ var monkeyUI = new function() {
             var _classUnknown = message.senderName == undefined ? 'user-unknown' : '';
             _bubble += '<span class="mky-message-user-name '+_classUnknown+'" style="color: #'+message.senderColor+'">'+_senderName+'</span>';
         }
-        _bubble += '<span class="mky-message-hour">'+defineTime(message.timestamp*1000)+'</span>';
         if(isOutgoing){
             _bubble += '<div class="mky-message-status '+_classStatus+'">';
             if(status != 0){
                 _bubble += '<i class="fa fa-check"></i>';
             }
+            _bubble += '</div>';
         }
+        _bubble += '<span class="mky-message-hour">'+defineTime(message.timestamp*1000)+'</span>';
         _bubble += '</div>'+
-                '</div>'+
-            '</div>';
+            	'</div>';
 
         return _bubble;
     }
@@ -882,8 +881,8 @@ var monkeyUI = new function() {
         if(this.player == 'knob'){
 	        var _messageId = message.id[0] == '-' ? (message.timestamp*1000) : message.id;
             var _content = '<div class="mky-content-audio mky-disabled">'+
-                                '<img id="mky-bubble-audio-play-button-'+_messageId+'" style="display:block;" onclick="monkeyUI.playAudioBubble('+_messageId+');" class="mky-bubble-audio-button mky-bubble-audio-button-'+_messageId+' mky-bubble-audio-play-button" src="../images/PlayBubble.png">'+
-                                '<img id="mky-bubble-audio-pause-button-'+_messageId+'" onclick="monkeyUI.pauseAudioBubble('+_messageId+');" class="mky-bubble-audio-button mky-bubble-audio-button-'+_messageId+'" src="../images/PauseBubble.png">'+
+                                '<img id="mky-bubble-audio-play-button-'+_messageId+'" style="display:block;" onclick="monkeyUI.playAudioBubble('+_messageId+');" class="mky-bubble-audio-button mky-bubble-audio-button-'+_messageId+' mky-bubble-audio-play-button" src="https://cdn.criptext.com/MonkeyUI/images/playAudioButton.png">'+
+                                '<img id="mky-bubble-audio-pause-button-'+_messageId+'" onclick="monkeyUI.pauseAudioBubble('+_messageId+');" class="mky-bubble-audio-button mky-bubble-audio-button-'+_messageId+'" src="https://cdn.criptext.com/MonkeyUI/images/pauseAudioButton.png">'+
                                 '<input id="bubble-audio-player-'+_messageId+'" class="knob second" data-width="100" data-displayPrevious=true value="0">'+
                                 '<div class="mky-bubble-audio-timer"><span id="mky-minutesBubble'+_messageId+'">00</span><span>:</span><span id="mky-secondsBubble'+_messageId+'">00</span></div>'+
                             '</div>'+
@@ -901,11 +900,9 @@ var monkeyUI = new function() {
             var _content = '<audio id="audio_'+message.id+'" preload="auto" controls="" src="'+_dataSource+'"></audio>';
             _messagePoint.append(_content);
         }
-
-        
-
+		
         scrollToDown();
-
+		
         if(message.eph == 1){
             updateNotification("Private Audio",_conversationIdHandling);
         }else{

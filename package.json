@@ -6,6 +6,7 @@
   "dependencies": {
     "fileapi": "^2.0.20",
     "jquery": "^2.2.1",
+    "jquery-knob": "^1.2.11",
     "jquery.filer": "^1.0.4"
   },
   "devDependencies": {
